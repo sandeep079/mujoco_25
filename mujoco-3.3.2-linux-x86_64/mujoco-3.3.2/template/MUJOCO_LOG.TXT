@@ -1,0 +1,50 @@
+Tue Jun 10 22:09:55 2025
+ERROR: Load model error: XML parse error 8:
+Error=XML_ERROR_PARSING_TEXT ErrorID=8 (0x8) Line number=1
+
+
+Tue Jun 10 22:38:50 2025
+ERROR: Load model error: Error: plane size(3) must be positive
+Element name 'carpet', id 0, line 13
+
+Tue Jun 10 22:38:57 2025
+ERROR: Load model error: Error: plane size(3) must be positive
+Element name 'carpet', id 0, line 13
+
+Tue Jun 10 22:39:00 2025
+ERROR: Load model error: Error: plane size(3) must be positive
+Element name 'carpet', id 0, line 13
+
+Tue Jun 10 22:39:24 2025
+ERROR: Load model error: Error: plane size(3) must be positive
+Element name 'carpet', id 0, line 13
+
+Tue Jun 10 22:39:58 2025
+ERROR: Load model error: Error: plane size(3) must be positive
+Element name 'carpet', id 0, line 13
+
+Tue Jun 10 22:42:27 2025
+ERROR: Load model error: XML Error: Schema violation: unrecognized attribute: 'ambient'
+Element 'global', line 8
+
+
+Tue Jun 10 22:48:47 2025
+ERROR: Load model error: XML Error: Schema violation: unrecognized attribute: 'ambient'
+Element 'global', line 6
+
+
+Tue Jun 10 22:51:32 2025
+ERROR: Load model error: XML Error: Schema violation: unrecognized attribute: 'ambient'
+Element 'global', line 6
+
+
+Tue Jun 10 22:54:23 2025
+ERROR: Load model error: XML Error: Schema violation: unrecognized attribute: 'shadows'
+Element 'quality', line 6
+
+
+Tue Jun 10 22:54:41 2025
+ERROR: Load model error: XML Error: Schema violation: unrecognized attribute: 'shadows'
+Element 'quality', line 6
+
+

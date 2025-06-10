@@ -1,0 +1,96 @@
+<mujoco model="ABU_Robocon_2025_Field">
+  <!-- Global Settings -->
+  <option timestep="0.015"/>
+  <option gravity="0 0 -9.8"/>
+  <visual>
+  </visual>
+
+  <!-- Materials -->
+  <asset>
+    <!-- Field Colors from Rulebook -->
+    <material name="playing_area" rgba="0.8 0.8 0.8 1"/>
+    <material name="red_zone" rgba="1 0.43 0.35 1"/>
+    <material name="blue_zone" rgba="0.35 0.43 0.78 1"/>
+    <material name="three_point_zone" rgba="0.78 0.78 0.78 1"/>
+    <material name="two_point_zone" rgba="0.57 0.57 0.57 1"/>
+    <material name="line" rgba="1 1 1 1"/>
+    <material name="fence" rgba="0.47 0.31 0.16 1"/>
+    <material name="backboard" rgba="0.9 0.9 0.9 0.7"/>
+    <material name="hoop" rgba="0.8 0.8 0.8 1"/>
+  </asset>
+
+  <!-- World Body -->
+  <worldbody>
+    <!-- Lighting -->
+    <light directional="true" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2" 
+           pos="0 0 10" dir="-0.5 0.1 -0.9"/>
+
+    <!-- Main Playing Area (15m x 8m) -->
+    <body name="playing_area" pos="0 0 0">
+      <!-- Main Surface -->
+      <geom name="surface" type="box" size="7.5 4 0.01" pos="0 0 0" material="playing_area"/>
+      
+      <!-- Center Line -->
+      <geom name="center_line" type="box" size="0.02 4 0.015" pos="0 0 0.01" material="line"/>
+      
+      <!-- Zones -->
+      <geom name="red_three_point" type="cylinder" size="3.1 0.01" pos="5.5 0 0.01" euler="0 90 0" material="three_point_zone"/>
+      <geom name="blue_three_point" type="cylinder" size="3.1 0.01" pos="-5.5 0 0.01" euler="0 90 0" material="three_point_zone"/>
+      <geom name="red_two_point" type="box" size="2.5 1.8 0.01" pos="4.5 0 0.01" material="two_point_zone"/>
+      <geom name="blue_two_point" type="box" size="2.5 1.8 0.01" pos="-4.5 0 0.01" material="two_point_zone"/>
+      
+      <!-- Field Boundaries (10cm fence) -->
+      <geom name="north_fence" type="box" size="7.5 0.025 0.05" pos="0 4.025 0.05" material="fence"/>
+      <geom name="south_fence" type="box" size="7.5 0.025 0.05" pos="0 -4.025 0.05" material="fence"/>
+      <geom name="east_fence" type="box" size="0.025 4 0.05" pos="7.525 0 0.05" material="fence"/>
+      <geom name="west_fence" type="box" size="0.025 4 0.05" pos="-7.525 0 0.05" material="fence"/>
+      
+      <!-- Red Team Basketball Hoop -->
+      <body name="red_hoop" pos="5.5 0 0">
+        <!-- Backboard (1800mm x 1050mm) -->
+        <geom name="red_backboard" type="box" size="0.9 0.525 0.01" pos="0.45 0 1.025" euler="0 0 0" material="backboard"/>
+        <!-- Hoop (450mm diameter) -->
+        <geom name="red_hoop" type="cylinder" size="0.225 0.01" pos="0.45 0 2.43" euler="0 90 0" material="hoop"/>
+      </body>
+      
+      <!-- Blue Team Basketball Hoop -->
+      <body name="blue_hoop" pos="-5.5 0 0">
+        <!-- Backboard (1800mm x 1050mm) -->
+        <geom name="blue_backboard" type="box" size="0.9 0.525 0.01" pos="-0.45 0 1.025" euler="0 0 0" material="backboard"/>
+        <!-- Hoop (450mm diameter) -->
+        <geom name="blue_hoop" type="cylinder" size="0.225 0.01" pos="-0.45 0 2.43" euler="0 90 0" material="hoop"/>
+      </body>
+    </body>
+    
+    <!-- Operating Areas -->
+    <body name="operating_areas">
+      <!-- Red Team Operating Area -->
+      <geom name="red_op_area" type="box" size="2 2 0.05" pos="7.5 2 0.025" material="red_zone"/>
+      <!-- Blue Team Operating Area -->
+      <geom name="blue_op_area" type="box" size="2 2 0.05" pos="-7.5 -2 0.025" material="blue_zone"/>
+      <!-- Spare Mechanism Zones -->
+      <geom name="red_spare_zone" type="box" size="1 1 0.05" pos="7.5 -2 0.025" material="red_zone" rgba="1 0.69 0.69 1"/>
+      <geom name="blue_spare_zone" type="box" size="1 1 0.05" pos="-7.5 2 0.025" material="blue_zone" rgba="0.69 0.69 1 1"/>
+    </body>
+    
+    <!-- Ball Rack (Positioned outside operating areas) -->
+    <body name="ball_rack" pos="0 -5 0.5">
+      <geom name="rack_base" type="box" size="0.5 0.5 0.05" material="fence"/>
+      <!-- Sample basketballs (Size 7) -->
+      <geom name="ball1" type="sphere" size="0.12" pos="-0.2 0 0.12" material="hoop"/>
+      <geom name="ball2" type="sphere" size="0.12" pos="0.2 0 0.12" material="hoop"/>
+    </body>
+    
+    <!-- Camera View -->
+    <camera name="overview" pos="0 -10 5" xyaxes="1 0 0 0 0.5 0.87"/>
+  </worldbody>
+
+  <!-- Contact Settings -->
+  <contact>
+    <exclude body1="red_hoop" body2="blue_hoop"/>
+  </contact>
+
+  <!-- Solver Settings -->
+  <size njmax="1000" nconmax="500"/>
+  <option cone="elliptic" impratio="0.1"/>
+</mujoco>
