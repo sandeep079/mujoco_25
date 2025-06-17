@@ -16,6 +16,7 @@
 
 import gc
 import inspect
+import math
 import os
 import textwrap
 import typing
@@ -128,6 +129,18 @@ class SpecsTest(absltest.TestCase):
         </mujoco>
     """)
     self.assertEqual(spec.to_xml(), xml)
+
+  def test_resolve_orientation(self):
+    spec = mujoco.MjSpec()
+    body = spec.worldbody.add_body(euler=[0, 0, 90])
+    quat = mujoco.MjSpec.resolve_orientation(
+        degree=spec.compiler.degree,
+        sequence=spec.compiler.eulerseq,
+        orientation=body.alt,
+    )
+    np.testing.assert_array_almost_equal(
+        quat, [math.sqrt(2) / 2, 0, 0, math.sqrt(2) / 2]
+    )
 
   def test_kwarg(self):
     # Create a spec.
@@ -844,6 +857,7 @@ class SpecsTest(absltest.TestCase):
         info='info'
     )
     plugin.config = {'twist': '10', 'bend': '1'}
+    self.assertEqual(plugin.config, {'twist': '10', 'bend': '1'})
 
     body = spec.worldbody.add_body()
     body.plugin = plugin
@@ -861,6 +875,17 @@ class SpecsTest(absltest.TestCase):
     self.assertEqual(model.nplugin, 1)
     self.assertEqual(model.npluginattr, 7)
     self.assertEqual(model.body_plugin[1], 0)
+    attributes = (''.join([chr(i) for i in model.plugin_attr]).split(chr(0)))
+    self.assertEqual(attributes[:2], ['10', '1'])
+
+    copy = spec.copy()  # before assigning the new config
+    wrong_config = {'wrong': '10', 'bend': '1'}
+    for s in [spec, copy]:
+      s.plugins[0].config = wrong_config
+      with self.assertRaisesRegex(
+          ValueError, "Error: unrecognized attribute 'plugin:wrong'"
+      ):
+        s.compile()
 
   def test_recompile_error(self):
     main_xml = """
@@ -1057,6 +1082,15 @@ class SpecsTest(absltest.TestCase):
     frame = body.to_frame()
     np.testing.assert_array_equal(frame.pos, [1, 2, 3])
 
+  def test_get_frame(self):
+    spec = mujoco.MjSpec()
+    body = spec.worldbody.add_body()
+    frame = body.add_frame()
+    geom = body.add_geom()
+    geom.set_frame(frame)
+    self.assertIsNotNone(frame)
+    self.assertIs(geom.frame, frame)
+
   def test_attach_to_frame(self):
     parent = mujoco.MjSpec()
     parent.assets = {'cube.obj': 'cube_content'}
@@ -1197,6 +1231,62 @@ class SpecsTest(absltest.TestCase):
     self.assertGreater(spec2._address, 0)
     self.assertGreater(spec3._address, 0)
     self.assertLen({spec1._address, spec2._address, spec3._address}, 3)
+
+  def test_actuator_shortname(self):
+    spec = mujoco.MjSpec()
+    actuator = spec.add_actuator(
+        gainprm=np.zeros((10, 1)),
+        dyntype=mujoco.mjtDyn.mjDYN_FILTER,
+        gaintype=mujoco.mjtGain.mjGAIN_AFFINE,
+        biastype=mujoco.mjtBias.mjBIAS_AFFINE,
+    )
+    actuator.set_to_motor()
+    self.assertEqual(actuator.gainprm[0], 1)
+    self.assertEqual(actuator.dyntype, mujoco.mjtDyn.mjDYN_NONE)
+    self.assertEqual(actuator.gaintype, mujoco.mjtGain.mjGAIN_FIXED)
+    self.assertEqual(actuator.biastype, mujoco.mjtBias.mjBIAS_NONE)
+
+    actuator.set_to_position(kp=2.0, kv=3.0, timeconst=4.0, inheritrange=True)
+    self.assertEqual(actuator.gainprm[0], 2)
+    self.assertEqual(actuator.biasprm[1], -2)
+    self.assertEqual(actuator.biasprm[2], -3)
+    self.assertEqual(actuator.dynprm[0], 4)
+    self.assertEqual(actuator.dyntype, mujoco.mjtDyn.mjDYN_FILTEREXACT)
+    self.assertEqual(actuator.gaintype, mujoco.mjtGain.mjGAIN_FIXED)
+    self.assertEqual(actuator.biastype, mujoco.mjtBias.mjBIAS_AFFINE)
+    self.assertEqual(actuator.inheritrange, True)
+
+    actuator.set_to_intvelocity(
+        kp=2.0, kv=3.0, timeconst=4.0, inheritrange=True
+    )
+    self.assertEqual(actuator.gainprm[0], 2)
+    self.assertEqual(actuator.biasprm[1], -2)
+    self.assertEqual(actuator.biasprm[2], -3)
+    self.assertEqual(actuator.dynprm[0], 4)
+    self.assertEqual(actuator.dyntype, mujoco.mjtDyn.mjDYN_INTEGRATOR)
+    self.assertEqual(actuator.gaintype, mujoco.mjtGain.mjGAIN_FIXED)
+    self.assertEqual(actuator.biastype, mujoco.mjtBias.mjBIAS_AFFINE)
+    self.assertEqual(actuator.inheritrange, True)
+
+    actuator.set_to_velocity(kv=5.0)
+    self.assertEqual(actuator.gainprm[0], 5)
+    self.assertEqual(actuator.biasprm[2], -5)
+    self.assertEqual(actuator.dyntype, mujoco.mjtDyn.mjDYN_NONE)
+    self.assertEqual(actuator.gaintype, mujoco.mjtGain.mjGAIN_FIXED)
+    self.assertEqual(actuator.biastype, mujoco.mjtBias.mjBIAS_AFFINE)
+
+    actuator.set_to_damper(kv=6.0)
+    self.assertEqual(actuator.gainprm[0], 0)
+    self.assertEqual(actuator.gainprm[2], -6)
+    self.assertEqual(actuator.dyntype, mujoco.mjtDyn.mjDYN_NONE)
+    self.assertEqual(actuator.gaintype, mujoco.mjtGain.mjGAIN_AFFINE)
+    self.assertEqual(actuator.biastype, mujoco.mjtBias.mjBIAS_NONE)
+
+    actuator.set_to_adhesion(gain=7.0)
+    self.assertEqual(actuator.gainprm[0], 7)
+    self.assertEqual(actuator.dyntype, mujoco.mjtDyn.mjDYN_NONE)
+    self.assertEqual(actuator.gaintype, mujoco.mjtGain.mjGAIN_FIXED)
+    self.assertEqual(actuator.biastype, mujoco.mjtBias.mjBIAS_NONE)
 
 if __name__ == '__main__':
   absltest.main()
